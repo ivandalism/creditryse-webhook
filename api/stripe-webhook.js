@@ -1,9 +1,8 @@
-const Stripe = require("stripe");
+import Stripe from "stripe";
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   if (req.method !== "POST") {
-    res.status(405).send("Method Not Allowed");
-    return;
+    return res.status(405).send("Method Not Allowed");
   }
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -37,4 +36,4 @@ module.exports = async (req, res) => {
   console.log("✅ Event received:", event.type);
 
   return res.status(200).json({ received: true });
-};
+}
