@@ -1,7 +1,6 @@
 {
   "functions": {
     "api/stripe-webhook.js": {
-      "runtime": "nodejs18.x",
       "includeFiles": "node_modules/stripe/**"
     }
   }
