@@ -1,8 +1,7 @@
 {
   "functions": {
     "api/stripe-webhook.js": {
-      "includeFiles": "node_modules/stripe/**",
-      "bodyParser": false
+      "includeFiles": "node_modules/stripe/**"
     }
   }
 }
