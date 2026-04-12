@@ -1,39 +1,38 @@
 import Stripe from "stripe";
 
 export default async function handler(req, res) {
+  console.log("🔥 Webhook hit");
+
   if (req.method !== "POST") {
     return res.status(405).send("Method Not Allowed");
   }
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-  let rawBody = "";
-
   try {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+    let rawBody = "";
+
     for await (const chunk of req) {
       rawBody += chunk;
     }
-  } catch (err) {
-    console.error("❌ Error reading body:", err);
-    return res.status(500).send("Failed to read body");
-  }
 
-  const sig = req.headers["stripe-signature"];
+    console.log("📦 Raw body received");
 
-  let event;
+    const sig = req.headers["stripe-signature"];
+    console.log("🔑 Signature header:", sig ? "present" : "missing");
 
-  try {
-    event = stripe.webhooks.constructEvent(
+    const event = stripe.webhooks.constructEvent(
       Buffer.from(rawBody),
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
+
+    console.log("✅ Event received:", event.type);
+
+    return res.status(200).json({ received: true });
+
   } catch (err) {
-    console.error("❌ Signature verification failed:", err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+    console.error("❌ FULL ERROR:", err);
+    return res.status(500).json({ error: err.message });
   }
-
-  console.log("✅ Event received:", event.type);
-
-  return res.status(200).json({ received: true });
 }
