@@ -1,6 +1,6 @@
-import Stripe from "stripe";
+const Stripe = require("stripe");
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   console.log("🔥 Webhook hit");
 
   if (req.method !== "POST") {
@@ -16,10 +16,7 @@ export default async function handler(req, res) {
       rawBody += chunk;
     }
 
-    console.log("📦 Raw body received");
-
     const sig = req.headers["stripe-signature"];
-    console.log("🔑 Signature header:", sig ? "present" : "missing");
 
     const event = stripe.webhooks.constructEvent(
       Buffer.from(rawBody),
@@ -27,7 +24,7 @@ export default async function handler(req, res) {
       process.env.STRIPE_WEBHOOK_SECRET
     );
 
-    console.log("✅ Event received:", event.type);
+    console.log("✅ Event:", event.type);
 
     return res.status(200).json({ received: true });
 
@@ -35,4 +32,4 @@ export default async function handler(req, res) {
     console.error("❌ FULL ERROR:", err);
     return res.status(500).json({ error: err.message });
   }
-}
+};
