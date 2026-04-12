@@ -1,7 +1,0 @@
-{
-  "functions": {
-    "api/stripe-webhook.js": {
-      "includeFiles": "node_modules/stripe/**"
-    }
-  }
-}
