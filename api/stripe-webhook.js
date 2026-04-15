@@ -1,35 +1,50 @@
-const Stripe = require("stripe");
+import crypto from "crypto";
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   console.log("🔥 Webhook hit");
 
   if (req.method !== "POST") {
     return res.status(405).send("Method Not Allowed");
   }
 
+  let rawBody = "";
+
+  for await (const chunk of req) {
+    rawBody += chunk;
+  }
+
+  const sig = req.headers["stripe-signature"];
+
+  if (!sig) {
+    console.error("❌ Missing signature");
+    return res.status(400).send("Missing signature");
+  }
+
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
   try {
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const elements = sig.split(",");
+    const signature = elements.find(e => e.startsWith("v1="))?.split("=")[1];
 
-    let rawBody = "";
+    const expectedSignature = crypto
+      .createHmac("sha256", endpointSecret)
+      .update(rawBody, "utf8")
+      .digest("hex");
 
-    for await (const chunk of req) {
-      rawBody += chunk;
+    if (signature !== expectedSignature) {
+      throw new Error("Invalid signature");
     }
 
-    const sig = req.headers["stripe-signature"];
+    console.log("✅ Signature verified");
 
-    const event = stripe.webhooks.constructEvent(
-      Buffer.from(rawBody),
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
+    const event = JSON.parse(rawBody);
 
-    console.log("✅ Event:", event.type);
+    console.log("✅ Event type:", event.type);
 
     return res.status(200).json({ received: true });
 
   } catch (err) {
-    console.error("❌ FULL ERROR:", err);
-    return res.status(500).json({ error: err.message });
+    console.error("❌ FULL ERROR:", err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
   }
-};
+}
