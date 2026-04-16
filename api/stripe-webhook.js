@@ -51,7 +51,8 @@ export default async function handler(req, res) {
             body: JSON.stringify({
               email: email,
               full_name: "",
-              avatar_url: ""
+              avatar_url: "",
+              plan: "pro"
             })
           }
         );
